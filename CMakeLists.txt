@@ -1,12 +1,12 @@
-SET(PROJECT_NAME DSO)
+SET(PROJECT_NAME SDSO)
 
 PROJECT(${PROJECT_NAME})
 CMAKE_MINIMUM_REQUIRED(VERSION 2.6)
 #set(CMAKE_VERBOSE_MAKEFILE ON)
 
 
-set(BUILD_TYPE Release)
-#set(BUILD_TYPE RelWithDebInfo)
+#set(BUILD_TYPE Release)
+set(BUILD_TYPE RelWithDebInfo)
 
 set(EXECUTABLE_OUTPUT_PATH bin)
 set(LIBRARY_OUTPUT_PATH lib)
@@ -22,16 +22,14 @@ find_package(LibZip QUIET)
 find_package(Pangolin 0.2 QUIET)
 find_package(OpenCV QUIET)
 
+
+
 # flags
 add_definitions("-DENABLE_SSE")
 set(CMAKE_CXX_FLAGS
-   "${SSE_FLAGS} -O3 -g -std=c++0x -march=native"
+   "${SSE_FLAGS} -O3 -fPIC -g -std=c++0x -march=native"
 #   "${SSE_FLAGS} -O3 -g -std=c++0x -fno-omit-frame-pointer"
 )
-
-if (MSVC)
-     set (CMAKE_CXX_FLAGS "${CMAKE_CXX_FLAGS} /EHsc")
-endif (MSVC)
 
 # Sources files
 set(dso_SOURCE_FILES
@@ -60,7 +58,6 @@ set(dso_SOURCE_FILES
 include_directories(
   ${PROJECT_SOURCE_DIR}/src
   ${PROJECT_SOURCE_DIR}/thirdparty/Sophus
-  ${PROJECT_SOURCE_DIR}/thirdparty/sse2neon
   ${EIGEN3_INCLUDE_DIR}
 ) 
 
@@ -115,17 +112,11 @@ add_library(dso ${dso_SOURCE_FILES} ${dso_opencv_SOURCE_FILES} ${dso_pangolin_SO
 #set_property( TARGET dso APPEND_STRING PROPERTY COMPILE_FLAGS -Wall )
 
 
-if (${CMAKE_SYSTEM_NAME} MATCHES "Darwin") # OSX
-    set(BOOST_THREAD_LIBRARY boost_thread-mt)
-else()
-    set(BOOST_THREAD_LIBRARY boost_thread)
-endif()
-
 # build main executable (only if we have both OpenCV and Pangolin)
 if (OpenCV_FOUND AND Pangolin_FOUND)
 	message("--- compiling dso_dataset.")
 	add_executable(dso_dataset ${PROJECT_SOURCE_DIR}/src/main_dso_pangolin.cpp )
-    target_link_libraries(dso_dataset dso boost_system cxsparse ${BOOST_THREAD_LIBRARY} ${LIBZIP_LIBRARY} ${Pangolin_LIBRARIES} ${OpenCV_LIBS})
+    target_link_libraries(dso_dataset dso boost_system boost_thread cxsparse ${LIBZIP_LIBRARY} ${Pangolin_LIBRARIES} ${OpenCV_LIBS})
 else()
 	message("--- not building dso_dataset, since either don't have openCV or Pangolin.")
 endif()
